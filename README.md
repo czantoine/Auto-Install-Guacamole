@@ -1,6 +1,6 @@
 # Auto-Install-Guacamole
 
-Automation of the installation of Guacamole + Nging Reverse Proxy + SSL
+Automation of the installation of Guacamole + Nginx Reverse Proxy + SSL
 
 ## Installation
 
