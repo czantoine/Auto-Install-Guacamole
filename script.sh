@@ -1,7 +1,10 @@
+#!/bin/bash
+
 VER="9.0.71"
+IP="3.208.17.184"
 
 sudo apt update
-
+cd
 sudo apt-get install build-essential make -y
 sudo apt install -y gcc nano vim curl wget g++ libcairo2-dev libjpeg-turbo8-dev libpng-dev libtool-bin libossp-uuid-dev \
 libavcodec-dev  libavformat-dev libavutil-dev libswscale-dev build-essential libpango1.0-dev libssh2-1-dev libvncserver-dev \
@@ -156,3 +159,62 @@ sudo bash -c 'cat >> /etc/guacamole/user-mapping.xml' << EOF
 EOF
 
 sudo systemctl restart tomcat guacd
+
+sudo apt-get install nginx -y
+sudo systemctl enable nginx
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/guacamole-selfsigned.key -out /etc/ssl/certs/guacamole-selfsigned.crt
+
+sudo bash -c 'cat >> /etc/nginx/sites-available/nginx-guacamole-ssl' << EOF
+server {
+	listen 80;
+	server_name $IP;
+EOF
+echo '	return 301 https://$host$request_uri;'| sudo tee -a /etc/nginx/sites-available/nginx-guacamole-ssl 
+sudo bash -c 'cat >> /etc/nginx/sites-available/nginx-guacamole-ssl' << EOF
+}
+server {
+	listen 443 ssl;
+	server_name guacamole.example.com;
+
+	root /var/www/html;
+
+	index index.html index.htm index.nginx-debian.html;
+    
+    ssl_certificate /etc/ssl/certs/guacamole-selfsigned.crt;
+	ssl_certificate_key /etc/ssl/private/guacamole-selfsigned.key;
+
+	ssl_protocols TLSv1.2 TLSv1.3;
+	ssl_prefer_server_ciphers on; 
+	ssl_dhparam /etc/nginx/dhparam.pem;
+	ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+	ssl_ecdh_curve secp384r1;
+	ssl_session_timeout  10m;
+	ssl_session_cache shared:SSL:10m;
+	resolver 3.208.17.184 8.8.8.8 valid=300s;
+	resolver_timeout 5s; 
+	add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+	add_header X-Frame-Options DENY;
+	add_header X-Content-Type-Options nosniff;
+	add_header X-XSS-Protection "1; mode=block";
+
+	access_log  /var/log/nginx/guac_access.log;
+	error_log  /var/log/nginx/guac_error.log;
+
+	location / {
+		    proxy_pass http://$IP:8080/guacamole/;
+		    proxy_buffering off;
+		    proxy_http_version 1.1;
+EOF
+echo '	    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'| sudo tee -a /etc/nginx/sites-available/nginx-guacamole-ssl 
+echo '	    proxy_set_header Upgrade $http_upgrade;'| sudo tee -a /etc/nginx/sites-available/nginx-guacamole-ssl 
+echo '	    proxy_set_header Connection $http_connection;'| sudo tee -a /etc/nginx/sites-available/nginx-guacamole-ssl 
+echo '	    proxy_cookie_path /guacamole/ /;'| sudo tee -a /etc/nginx/sites-available/nginx-guacamole-ssl 
+sudo bash -c 'cat >> /etc/nginx/sites-available/nginx-guacamole-ssl' << EOF
+	}
+
+}
+EOF
+
+openssl dhparam -dsaparam -out /etc/nginx/dhparam.pem 4096
+sudo ln -s /etc/nginx/sites-available/nginx-guacamole-ssl /etc/nginx/sites-enabled/
+sudo systemctl restart nginx
