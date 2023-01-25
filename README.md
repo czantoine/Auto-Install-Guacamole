@@ -1,12 +1,17 @@
 # Auto-Install-Guacamole
 
-Automation of the installation of Guacamole
+Automation of the installation of Guacamole + Nging Reverse Proxy + SSL
 
 ## Installation
 
 ```sh
 git clone https://github.com/czantoine/Auto-Install-Guacamole.git
 cd Auto-Install-Guacamole
+```
+
+Edit the file script.sh with your own server `$IP`
+
+``` sh
 bash script.sh
 ```
 
