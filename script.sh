@@ -215,6 +215,6 @@ sudo bash -c 'cat >> /etc/nginx/sites-available/nginx-guacamole-ssl' << EOF
 }
 EOF
 
-openssl dhparam -dsaparam -out /etc/nginx/dhparam.pem 4096
+sudo openssl dhparam -dsaparam -out /etc/nginx/dhparam.pem 4096
 sudo ln -s /etc/nginx/sites-available/nginx-guacamole-ssl /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
