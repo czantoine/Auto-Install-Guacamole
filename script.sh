@@ -190,7 +190,7 @@ server {
 	ssl_ecdh_curve secp384r1;
 	ssl_session_timeout  10m;
 	ssl_session_cache shared:SSL:10m;
-	resolver 3.208.17.184 8.8.8.8 valid=300s;
+	resolver $IP 8.8.8.8 valid=300s;
 	resolver_timeout 5s; 
 	add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
 	add_header X-Frame-Options DENY;
